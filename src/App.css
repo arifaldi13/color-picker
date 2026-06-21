@@ -210,15 +210,14 @@
 
 .slider-field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 78px;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  align-items: center;
   gap: 10px 12px;
 }
 
 .slider-field > span {
-  grid-column: 1 / -1;
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   color: var(--text-soft);
   font-size: 12px;
   font-weight: 800;
@@ -226,14 +225,8 @@
   text-transform: uppercase;
 }
 
-.slider-field strong {
-  color: var(--text-strong);
-  font-size: 13px;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 .slider-field input[type='range'] {
+  grid-column: 1 / -1;
   width: 100%;
   accent-color: #67e8f9;
 }
@@ -251,23 +244,20 @@
   box-sizing: border-box;
 }
 
-.seed-row {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: 18px 42px 1fr;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
+.slider-field input[type='text'] {
+  height: 30px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  font: 800 14px/1 var(--font-mono);
+  text-align: right;
 }
 
-.seed-row input {
-  width: 42px;
-  height: 34px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+.slider-field input[type='text']:focus {
+  padding: 0 8px;
+  border-color: rgba(103, 232, 249, 0.56);
   background: #0f1722;
-  cursor: pointer;
+  outline: none;
 }
 
 .output-stack button {
@@ -392,6 +382,22 @@ code {
   gap: 14px;
 }
 
+.fallback-box .status-chip {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.fallback-box .segmented-group {
+  width: 100%;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.fallback-box .segmented-group button {
+  flex: 1;
+}
+
 .section-title {
   justify-content: flex-start;
   color: var(--text-strong);
@@ -426,6 +432,27 @@ code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 52px 34px;
   gap: 8px;
+}
+
+.output-stack .hex-output div {
+  grid-template-columns: minmax(0, 1fr) 34px 52px 34px;
+}
+
+.pipette-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pipette-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .notice {

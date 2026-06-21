@@ -65,8 +65,12 @@ function rgbTextFromColor(color: OklchColor) {
   )}, ${Math.round(clamp(rgb.b, 0, 1) * 255)}`
 }
 
+function formatNumber(value: number, decimals: number) {
+  return value.toFixed(decimals).replace(/\.?0+$/, '')
+}
+
 function oklchTextFromColor(color: OklchColor) {
-  return `oklch(${color.l.toFixed(2)} ${color.c.toFixed(2)} ${displayHue(color.h).toFixed(2)})`
+  return `oklch(${formatNumber(color.l, 4)} ${formatNumber(color.c, 4)} ${formatNumber(displayHue(color.h), 2)})`
 }
 
 function parseOklchText(value: string): OklchColor | null {
@@ -131,20 +135,20 @@ type SliderProps = {
   max: number
   step: number
   decimals?: number
-  unit?: string
   onChange: (value: number) => void
 }
 
-function SliderField({ label, value, min, max, step, decimals = 2, unit, onChange }: SliderProps) {
-  const [draftValue, setDraftValue] = useState(value.toFixed(decimals))
+function SliderField({ label, value, min, max, step, decimals = 2, onChange }: SliderProps) {
+  const [draftValue, setDraftValue] = useState(formatNumber(value, decimals))
   const [isEditing, setIsEditing] = useState(false)
-  const displayValue = isEditing ? draftValue : value.toFixed(decimals)
+  const formattedValue = formatNumber(value, decimals)
+  const displayValue = isEditing ? draftValue : formattedValue
 
   function commitDraft() {
     const parsed = parseDecimalInput(displayValue)
     const nextValue = parsed === null ? value : clamp(parsed, min, max)
     onChange(nextValue)
-    setDraftValue(nextValue.toFixed(decimals))
+    setDraftValue(formatNumber(nextValue, decimals))
     setIsEditing(false)
   }
 
@@ -152,26 +156,14 @@ function SliderField({ label, value, min, max, step, decimals = 2, unit, onChang
     <label className="slider-field">
       <span>
         {label}
-        <strong>
-          {value.toFixed(decimals)}
-          {unit}
-        </strong>
       </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
       <input
         type="text"
         inputMode="decimal"
         aria-label={`${label} value`}
         value={displayValue}
         onFocus={() => {
-          setDraftValue(value.toFixed(decimals))
+          setDraftValue(formattedValue)
           setIsEditing(true)
         }}
         onChange={(event) => setDraftValue(event.target.value)}
@@ -181,11 +173,19 @@ function SliderField({ label, value, min, max, step, decimals = 2, unit, onChang
             event.currentTarget.blur()
           }
           if (event.key === 'Escape') {
-            setDraftValue(value.toFixed(decimals))
+            setDraftValue(formattedValue)
             setIsEditing(false)
             event.currentTarget.blur()
           }
         }}
+      />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
       />
     </label>
   )
@@ -446,10 +446,6 @@ function App() {
           <h1>OKLCH Gamut Picker</h1>
           <p>Dark workspace, RGB input, multi-gamut mask</p>
         </div>
-        <div className={`status-chip ${inGamut ? 'ok' : 'warn'}`}>
-          {inGamut ? <Check size={16} /> : <AlertTriangle size={16} />}
-          {inGamut ? 'In gamut' : 'Out of gamut'}
-        </div>
       </header>
 
       <section className="workspace">
@@ -471,23 +467,25 @@ function App() {
 
           <div className="input-stack">
             <SliderField
-              label="L"
+              label="Lightness"
               min={0}
               max={1}
-              step={0.01}
+              step={0.0001}
+              decimals={4}
               value={color.l}
               onChange={(value) => updateColor({ l: value })}
             />
             <SliderField
-              label="C"
+              label="Chroma"
               min={0}
               max={MAX_CHROMA}
-              step={0.01}
+              step={0.0001}
+              decimals={4}
               value={color.c}
               onChange={(value) => updateColor({ c: value })}
             />
             <SliderField
-              label="H"
+              label="Hue"
               min={0}
               max={360}
               step={0.01}
@@ -496,45 +494,11 @@ function App() {
             />
           </div>
 
-          <div className="seed-row">
-            <Pipette size={17} />
-            <input
-              aria-label="Seed color picker"
-              type="color"
-              value={hex}
-              onChange={(event) => commitHex(event.target.value)}
-            />
-          </div>
-        </aside>
-
-        <section className="canvas-panel">
-          <div className="canvas-header">
-            <div>
-              <span>Hue / Chroma</span>
-              <strong>L {color.l.toFixed(2)}</strong>
-            </div>
-            <span className="boundary-label">Boundary line</span>
-          </div>
-          <GamutCanvas color={color} masks={masks} onPick={setColor} />
-        </section>
-
-        <aside className="panel output-panel">
-          <div className="swatch" style={{ background: displayRgbCss(color) }}>
-            <span>{activeMaskLabel}</span>
-          </div>
-
-          <div className="metric-grid">
-            <div>
-              <span>Current C</span>
-              <strong>{color.c.toFixed(2)}</strong>
-            </div>
-            <div>
-              <span>Max C</span>
-              <strong>{limit.toFixed(2)}</strong>
-            </div>
-          </div>
-
           <div className="fallback-box">
+            <div className={`status-chip ${inGamut ? 'ok' : 'warn'}`}>
+              {inGamut ? <Check size={16} /> : <AlertTriangle size={16} />}
+              {inGamut ? 'In gamut' : 'Out of gamut'}
+            </div>
             <div className="section-title">
               <MoveHorizontal size={17} />
               <span>Fallback</span>
@@ -552,6 +516,34 @@ function App() {
             <button type="button" className="primary-action" onClick={applyFallback}>
               Move to gamut edge
             </button>
+          </div>
+        </aside>
+
+        <section className="canvas-panel">
+          <div className="canvas-header">
+            <div>
+              <span>Hue / Chroma</span>
+              <strong>Lightness {formatNumber(color.l, 4)}</strong>
+            </div>
+            <span className="boundary-label">Boundary line</span>
+          </div>
+          <GamutCanvas color={color} masks={masks} onPick={setColor} />
+        </section>
+
+        <aside className="panel output-panel">
+          <div className="swatch" style={{ background: displayRgbCss(color) }}>
+            <span>{activeMaskLabel}</span>
+          </div>
+
+          <div className="metric-grid">
+            <div>
+              <span>Current C</span>
+              <strong>{formatNumber(color.c, 4)}</strong>
+            </div>
+            <div>
+              <span>Max C</span>
+              <strong>{formatNumber(limit, 4)}</strong>
+            </div>
           </div>
 
           <div className="output-stack">
@@ -574,7 +566,7 @@ function App() {
                 </button>
               </div>
             </label>
-            <label>
+            <label className="hex-output">
               <span>HEX</span>
               <div>
                 <input
@@ -585,6 +577,15 @@ function App() {
                     if (event.key === 'Enter') commitHex()
                   }}
                 />
+                <button type="button" className="pipette-button" aria-label="Pick HEX color">
+                  <Pipette size={15} />
+                  <input
+                    aria-label="Seed color picker"
+                    type="color"
+                    value={hex}
+                    onChange={(event) => commitHex(event.target.value)}
+                  />
+                </button>
                 <button type="button" onClick={() => commitHex()}>
                   Apply
                 </button>
